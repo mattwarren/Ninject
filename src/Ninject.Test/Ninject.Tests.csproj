@@ -90,6 +90,7 @@
     <Compile Include="Fakes\Monk.cs" />
     <Compile Include="Fakes\Shield.cs" />
     <Compile Include="Integration\ConstructorArgumentInBindingConfigurationBuilderTest.cs" />
+    <Compile Include="Integration\DynamicMethodInjectionFactory_Invalid_IL.cs" />
     <Compile Include="Integration\GenericBindings.cs" />
     <Compile Include="Integration\WhenReleasingAnObject.cs" />
     <Compile Include="Integration\ConstantTests.cs" />

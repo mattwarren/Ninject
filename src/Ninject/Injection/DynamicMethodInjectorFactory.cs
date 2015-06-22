@@ -54,7 +54,23 @@ namespace Ninject.Injection
 #endif
             il.Emit(OpCodes.Ret);
 
-            return (ConstructorInjector) dynamicMethod.CreateDelegate(typeof(ConstructorInjector));
+            //return (ConstructorInjector) dynamicMethod.CreateDelegate(typeof(ConstructorInjector));
+
+            // You don't see the error until you actully execute the delegate, the IL isn't checked when it's emitted
+            var ctorDelegate = (ConstructorInjector)dynamicMethod.CreateDelegate(typeof(ConstructorInjector));
+
+            if (constructor.DeclaringType.Namespace == "System" &&
+                constructor.DeclaringType.Name.StartsWith("Func`"))
+            {
+                Console.WriteLine("### Calling the delegate (created via IL Emit) ###");
+                MethodInfo testMethod = new methodof<Action>(Console.WriteLine);
+                // No really sure what valid parameters are here!! (Func<T> ctor takes an Object and an IntPtr)
+                // But in reality it doesn't matter, whilst the emitted IL is invalid, this will through an VerificationException
+                var result = ctorDelegate(null, testMethod.MethodHandle.GetFunctionPointer());
+                Console.WriteLine("### SUCCESS ### ");
+            }
+
+            return ctorDelegate;
 #endif
         }
 
@@ -171,6 +187,33 @@ namespace Ninject.Injection
             return "DynamicInjector" + Guid.NewGuid().ToString("N");
         }
 #endif
+    }
+
+    public class methodof<T>
+    {
+        private readonly MethodInfo method;
+
+        public methodof(T func)
+        {
+            Delegate del = (Delegate)(object)func;
+            this.method = del.Method;
+        }
+
+        public static implicit operator methodof<T>(T methodof)
+        {
+            return new methodof<T>(methodof);
+        }
+
+        public static implicit operator MethodInfo(methodof<T> methodof)
+        {
+            return methodof.method;
+        }
+
+        public override string ToString()
+        {
+            return String.Format(
+                "[MethodInfo] {0}.{1}:{2}(..)", method.DeclaringType.Namespace, method.DeclaringType.Name, method.Name);
+        }
     }
 }
 #endif //!NO_LCG
